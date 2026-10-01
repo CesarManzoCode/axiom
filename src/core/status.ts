@@ -80,7 +80,8 @@ export function positionsOn(k: Kernel, v: Viewer, revId: string, scope: QuerySco
     const c = pj(r.content);
     const p = c.payload;
     if (p.subject?.rev !== revId) continue;
-    const assessorAgent = p.assessor?.agent ?? r.sealed_by;
+    // A declared descriptor (e.g. "source authors via M05") is the assessor; the sealer is only the recorder.
+    const assessorAgent = p.assessor?.agent ?? (p.assessor?.descriptor ? undefined : r.sealed_by);
     const a = k.agentDescriptor(assessorAgent);
     const base = {
       assessment_rev: r.id,
