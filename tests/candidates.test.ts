@@ -36,9 +36,11 @@ describe("candidate boundary", () => {
     const c = submit(w, w.ai, "declaration", "Candidate thm", { category: "propositional", statement: "every foo is bar" });
     expect(codeOf(() => w.call(w.ai, "promote", { candidate_rev: c.rev, scope: "x", decision: "self" }))).toBe("gate_missing");
     expect(codeOf(() => w.call(w.ai, "gateTransition", { entity_id: c.entity_id, to: "under_review", reason: "" }))).toBe("gate_missing");
-    // A human candidate producer cannot gate their own candidate either.
+    // A human may admit their own extraction, and the record says it is not independent.
     const own = submit(w, w.ben, "declaration", "Ben's candidate", { category: "propositional", statement: "b" }, { provenance: { origin: "human", original_attribution: "Ben" } });
-    expect(codeOf(() => w.call(w.ben, "promote", { candidate_rev: own.rev, scope: "x", decision: "self" }))).toBe("insufficient_permission");
+    w.call(w.ben, "promote", { candidate_rev: own.rev, scope: "own extraction", decision: "self-admission" });
+    const selfGate = w.call(w.ben, "candidateQueue", { workspace_id: w.ws }).find((x: any) => x.rev === own.rev).gate.history.find((h: any) => h.action === "promoted");
+    expect(selfGate.independence).toMatch(/Self-admission/);
     // Readers cannot gate.
     expect(codeOf(() => w.call(w.carl, "promote", { candidate_rev: c.rev, scope: "x", decision: "y" }))).toBe("not_found");
     const r = w.call(w.ana, "promote", { candidate_rev: c.rev, scope: "useful relation; proof claimed by its author", decision: "admit" });
@@ -91,7 +93,7 @@ describe("candidate boundary", () => {
       title: "Cook's Theorem 1",
       content: { context: { rev: w.root }, payload: { category: "propositional", statement: "Every NP language is poly-time query-reducible to tautologies" }, provenance: { origin: "ai", acquisition: "extraction", sources: [{ source: { rev: src.rev }, locator: "Theorem 1" }], original_attribution: "Stephen Cook", dates: { discovery_claimed_at: "unknown" } }, contributions: [{ descriptor: "Stephen Cook", roles: ["discovery", "statement", "proof"], character: "acknowledged" }] },
     });
-    const r = w.call(w.ben === "" ? w.ana : w.rita, "promote", { candidate_rev: c.rev, scope: "faithful extraction", decision: "admit" });
+    const r = w.call(w.rita, "promote", { candidate_rev: c.rev, scope: "faithful extraction", decision: "admit" });
     const credit = w.call(w.ana, "contributions", { entity_id: w.call(w.ana, "revision", { rev: r.curated_rev }).entity_id });
     const roles = credit.contributions.filter((x: any) => x.roles?.length);
     expect(roles.find((x: any) => x.descriptor === "Stephen Cook").roles).toContain("discovery");

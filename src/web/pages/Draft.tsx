@@ -652,7 +652,9 @@ function RelationForm({ p, setP }: { p: any; setP: (x: any) => void }) {
           <select
             value={contract ? `${contract.id}@${contract.version}` : ""}
             onChange={(e) => {
-              const [cid, ver] = e.target.value.split("@");
+              const at = e.target.value.indexOf("@");
+              const cid = e.target.value.slice(0, at);
+              const ver = e.target.value.slice(at + 1);
               setP({ contract: { id: cid, version: ver }, fields: cid === "decomposes_into" ? { plan_mode: "OR", ...(p.fields ?? {}) } : (p.fields ?? {}) });
             }}
           >

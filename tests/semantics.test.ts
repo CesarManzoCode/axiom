@@ -101,8 +101,6 @@ describe("support, critique and refutation", () => {
     expect(codeOf(() => mk(base))).toBe("contract_violation"); // range missing
     const ok = mk({ ...base, attempt: { ...base.attempt, failure: { ...base.attempt.failure, range: "all candidates up to N = 12 with parameters p" } } });
     expect(ok.rev).toBeTruthy();
-    const missing = mk.length; // eslint-friendly no-op
-    void missing;
     expect(codeOf(() => mk({ ...base, attempt: { ...base.attempt, failure: { ...base.attempt.failure, range: "x", non_conclusions: [] } } }))).toBe("contract_violation");
     // No impossibility statement appears: O03's target support/counter-evidence is unchanged.
     expect(w.call(w.ana, "support", { rev: R("S_SAT_NOT_IN_PPOLY") }).counter_evidence).toHaveLength(0);
@@ -111,7 +109,7 @@ describe("support, critique and refutation", () => {
   it("AC10: opposite reviews of one revision both stay visible; a curator preference names curator and policy", () => {
     const a = w.review(w.ben, R("P58"), [{ dimension: "correctness", value: "supported_in_scope" }]);
     w.review(w.ana, R("P58"), [{ dimension: "correctness", value: "defect_found", locator: "step 2" }]);
-    let st = w.call(w.carl === "" ? w.ana : w.ana, "status", { rev: R("P58") });
+    let st = w.call(w.ana, "status", { rev: R("P58") });
     const corr = st.findings.find((f: any) => f.dimension === "correctness");
     expect(corr.summary).toBe("conflicting");
     expect(corr.positions).toHaveLength(2);

@@ -132,7 +132,7 @@ describe("§27 workflows over HTTP", () => {
     expect(sup.entries.find((e: any) => e.rev === ids.proof).status).toBe("defective");
     expect(sup.entries.find((e: any) => e.rev === repaired).status).toBe("unevaluated");
     expect((await rpc("ben", "status", { rev: ids.claim })).dimensions.logical.summary).not.toBe("refuted");
-    void crit;
+    expect((await rpc("ben", "revision", { rev: crit.rev })).content.payload.locator).toBe("s2");
   });
 
   it("9 — obligation → bundle → attempt in narrative → closure proposal → decision", async () => {

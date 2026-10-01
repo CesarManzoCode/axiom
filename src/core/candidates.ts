@@ -88,16 +88,18 @@ function requireHumanGate(k: Kernel, actor: string, candidateEntity: string) {
   if (kind !== "human")
     throw new DomainError("gate_missing", "Gate decisions require an authorized human reviewer; agents and services cannot decide (I39, I40).");
   k.requireRole(ent.workspace_id, actor, "curator", "editor");
+  // A human may admit their own extraction/text as an attributed assertion (§21, §34H); the
+  // record says so. Agents never gate (checked above), so no agent output is self-approved.
   const producer = ent.owner_id;
-  if (producer === actor)
-    throw new DomainError("insufficient_permission", "The producer of a candidate cannot gate its own output.");
   const operator = k.agent(producer)?.operator_id;
   return {
     ent,
     independence:
-      operator === actor
-        ? "Reviewer operates the producing agent; this is the operator's own review, not independent validation."
-        : "Reviewer is distinct from the producing agent.",
+      producer === actor
+        ? "Self-admission by the human producer (own text or extraction); not an independent review."
+        : operator === actor
+          ? "Reviewer operates the producing agent; this is the operator's own review, not independent validation."
+          : "Reviewer is distinct from the producer.",
   };
 }
 

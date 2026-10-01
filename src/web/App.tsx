@@ -91,7 +91,8 @@ function Shell({ children }: { children: React.ReactNode }) {
         /* ignore */
       }
   }, [loc.pathname]);
-  const { data: workspaces } = useRpc(agent ? "myWorkspaces" : null, {}, [agent?.id]);
+  const routeWs = loc.pathname.match(/^\/w\/([^/]+)/)?.[1];
+  const { data: workspaces } = useRpc(agent ? "myWorkspaces" : null, {}, [agent?.id, routeWs]);
   const { data: notes, reload: reloadNotes } = useRpc(agent ? "notifications" : null, {}, [agent?.id, loc.pathname]);
   const unread = (notes ?? []).filter((n: any) => !n.read).length;
   const [showNotes, setShowNotes] = useState(false);
