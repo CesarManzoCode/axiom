@@ -293,8 +293,8 @@ export function impact(k: Kernel, v: Viewer, input: ImpactInput) {
       bucket: t.strength === "definite" ? "definitely_affected" : "possibly_affected",
       dimension: "support set",
       rule: "R-SUPPORT",
-      reason: remaining.length
-        ? "Loses an affected support; only unevaluated alternatives remain. Not refuted."
+      reason: remaining.some((s) => s.status !== "defective")
+        ? "Loses an affected support; only unevaluated or contested alternatives remain. This is not a refutation."
         : "No accepted support known after this change. This is not a refutation.",
       route: t.route,
     });

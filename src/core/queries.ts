@@ -27,6 +27,12 @@ export function projectRevision(k: Kernel, v: Viewer, revId: string) {
   prov.sources = (prov.sources ?? []).filter((s: any) => !("rev" in s.source) || v.canSeeRev(s.source.rev));
   if (prov.derived_from_candidate && !v.canSeeRev(prov.derived_from_candidate.rev)) delete prov.derived_from_candidate;
   const member = v.member(row.workspace_id);
+  // Outside the workspace, AI run configuration (possibly prompts) and internal notes stay in
+  // the private ledger; model/provider/version remain visible (Q10).
+  if (!member) {
+    if (prov.ai_run) prov.ai_run = { model: prov.ai_run.model, provider: prov.ai_run.provider, version: prov.ai_run.version };
+    delete prov.notes;
+  }
   const parents = pj<string[]>(row.parents).filter((p) => v.canSeeRev(p));
   return {
     id: row.id,
@@ -488,7 +494,7 @@ export function search(k: Kernel, v: Viewer, q: { text?: string; workspace_id?: 
 }
 
 /** Local graph: bounded neighborhood. Relations are hyper-nodes so n-ary roles are never flattened. */
-export function localGraph(k: Kernel, v: Viewer, revId: string, opts: { depth?: number; max?: number; include_citations?: boolean } = {}) {
+export function localGraph(k: Kernel, v: Viewer, revId: string, opts: { depth?: number; max?: number; include_citations?: boolean; include_assessments?: boolean } = {}) {
   if (!v.canSeeRev(revId)) throw notFound();
   const depth = opts.depth ?? 1;
   const max = opts.max ?? 60;
@@ -518,6 +524,7 @@ export function localGraph(k: Kernel, v: Viewer, revId: string, opts: { depth?: 
         if (!k.revRow(other) || !v.canSeeRev(other)) continue;
         if (k.entityRow(k.revRow(other)!.entity_id)!.namespace === "candidate") continue;
         if (!opts.include_citations && e.dep_kind && NON_LOGICAL_DEPS.has(e.dep_kind)) continue;
+        if (!opts.include_assessments && e.via === "subject") continue;
         if (!addNode(other)) continue;
         edges.push({ from: e.rev_id, to: e.target_rev, via: e.via, role: e.role, slot: e.slot, dep_kind: e.dep_kind });
         next.push(other);

@@ -69,6 +69,10 @@ export function exportPublication(k: Kernel, v: Viewer, pubId: string) {
     c.parents = (c.parents ?? []).filter((x: string) => v.canSeeRev(x));
     c.provenance = { ...c.provenance, sources: (c.provenance?.sources ?? []).filter((s: any) => v.canSeeRev(s.source.rev)) };
     if (c.provenance.derived_from_candidate && !v.canSeeRev(c.provenance.derived_from_candidate.rev)) delete c.provenance.derived_from_candidate;
+    if (!v.member(r.workspace_id)) {
+      if (c.provenance.ai_run) c.provenance.ai_run = { model: c.provenance.ai_run.model, provider: c.provenance.ai_run.provider, version: c.provenance.ai_run.version };
+      delete c.provenance.notes;
+    }
     return { id: r.id, entity_id: r.entity_id, seq: r.seq, kind: r.kind, title: r.title, content: c, context_rev: r.context_rev, content_hash: r.content_hash, sealed_at: r.sealed_at, vocab: r.vocab };
   });
   return {
@@ -148,13 +152,13 @@ export function importWorkspace(k: Kernel, actor: string, data: any) {
       k.db.run(
         `insert into events(id, kind, workspace_id, actor_id, subject_entity, subject_rev, payload, occurred_at, recorded_at, audience)
          values(?,?,?,?,?,?,?,?,?,?)`,
-        e.id, e.kind, ws.id, e.actor_id, e.subject_entity, e.subject_rev, j(e.payload), e.occurred_at, e.recorded_at, j(e.audience),
+        e.id, e.kind, ws.id, e.actor_id ?? null, e.subject_entity ?? null, e.subject_rev ?? null, j(e.payload), e.occurred_at ?? null, e.recorded_at, j(e.audience),
       );
     for (const p of data.publications)
       k.db.run(
         `insert into publications(id, workspace_id, issuer_id, revs, audience, license, status, embargo, exposure, assessment_snapshot, title, event_id, created_at, published_at)
          values(?,?,?,?,?,?,?,?,?,?,?,?,?,?)`,
-        p.id, ws.id, p.issuer_id, j(p.revs), j(p.audience), p.license, p.status, j(p.embargo), j(p.exposure), j(p.assessment_snapshot), p.title, p.event_id, p.created_at, p.published_at,
+        p.id, ws.id, p.issuer_id, j(p.revs), j(p.audience), p.license, p.status, p.embargo ? j(p.embargo) : null, p.exposure ? j(p.exposure) : null, p.assessment_snapshot ? j(p.assessment_snapshot) : null, p.title ?? null, p.event_id ?? null, p.created_at, p.published_at ?? null,
       );
     for (const a of data.rev_audience ?? []) k.db.run("insert into rev_audience(rev_id, kind, agent_id, publication_id) values(?,?,?,?)", a.rev_id, a.kind, a.agent_id, a.publication_id);
     k.recordEvent({ kind: "imported", workspace_id: ws.id, actor_id: actor, payload: { format: data.format, version: data.version, exported_at: data.exported_at, cut: data.cut, revisions: data.revisions.length }, audience: { mode: "workspace" } });

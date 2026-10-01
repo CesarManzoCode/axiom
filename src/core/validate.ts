@@ -210,7 +210,7 @@ export function contextConflicts(lookup: Lookup, ctx: ContextP, selfEntity: stri
   const seen = new Set<string>();
   visit(ctx.parent, seen);
   for (const i of ctx.imports) visit(i, seen);
-  if (selfEntity && versions.has(selfEntity)) conflicts.push("A context cannot import a revision of itself.");
+  if (selfEntity && versions.has(selfEntity)) throw new DomainError("cycle", "Context imports/parents would form a cycle (a context cannot import itself).");
   // A context's own notation/axioms that redefine inherited ones are explicit deltas only when resolved.
   absorb({ ...ctx, notation: ctx.notation, axioms: ctx.axioms } as ContextP, "this context");
   const distinct = new Set(foundations.values());

@@ -696,7 +696,14 @@ export function indexEdges(k: Kernel, revId: string, content: Content, lookup: L
 function checkStructuralAcyclic(k: Kernel, newRevs: string[]) {
   const children = (rev: string) =>
     k.db.all("select target_rev from refs where rev_id = ? and structural = 1", rev).map((r) => r.target_rev as string);
-  for (const start of newRevs) {
+  // Structural relations add edges whose source is their *whole*, so check from those too.
+  const starts = new Set(newRevs);
+  for (const r of newRevs) {
+    const c = k.revContent(r);
+    if (c?.kind === "relation" && ["has_part", "contains"].includes(c.payload.contract.id))
+      for (const s of c.payload.slots) if (s.role === "whole") starts.add(s.ref.rev);
+  }
+  for (const start of starts) {
     const stack = [...children(start)];
     const seen = new Set<string>();
     while (stack.length) {

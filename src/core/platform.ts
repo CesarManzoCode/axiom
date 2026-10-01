@@ -253,7 +253,7 @@ export const METHODS = {
     if (!v(c).canSeeRev(a.rev)) throw notFound();
     return barrierApplicability(c.k, v(c), a.rev, a);
   }, false),
-  localGraph: m(z.object({ rev: id, depth: z.number().int().min(1).max(3).optional(), max: z.number().int().max(200).optional(), include_citations: z.boolean().optional() }), (c, a) => Q.localGraph(c.k, v(c), a.rev, a), false),
+  localGraph: m(z.object({ rev: id, depth: z.number().int().min(1).max(3).optional(), max: z.number().int().max(200).optional(), include_citations: z.boolean().optional(), include_assessments: z.boolean().optional() }), (c, a) => Q.localGraph(c.k, v(c), a.rev, a), false),
   notifications: m(z.object({}), (c) => Q.notifications(c.k, v(c))),
   markNotificationsRead: m(z.object({}), (c) => (c.k.db.run("update notifications set read = 1 where agent_id = ?", me(c)), { ok: true })),
   contributions: m(z.object({ entity_id: id }), (c, a) => {

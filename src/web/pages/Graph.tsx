@@ -7,7 +7,8 @@ import { ErrorBox, Loading, useRpc } from "../ui.tsx";
 export function LocalGraph({ rev }: { rev: string }) {
   const [depth, setDepth] = useState(1);
   const [citations, setCitations] = useState(false);
-  const { data, error } = useRpc("localGraph", { rev, depth, include_citations: citations, max: 60 });
+  const [assessments, setAssessments] = useState(false);
+  const { data, error } = useRpc("localGraph", { rev, depth, include_citations: citations, include_assessments: assessments, max: 60 });
   const nav = useNavigate();
   const layout = useMemo(() => {
     if (!data) return null;
@@ -39,7 +40,8 @@ export function LocalGraph({ rev }: { rev: string }) {
       ids.forEach((id, i) => {
         if (l === 0) return pos.set(id, [cx, cy]);
         const a = (2 * Math.PI * i) / ids.length + l * 0.4;
-        pos.set(id, [cx + 150 * l * Math.cos(a) * 1.3, cy + 140 * l * Math.sin(a)]);
+        const r = Math.max(150, ids.length * 22) * l;
+        pos.set(id, [cx + Math.min(r * 1.4, 400 * l) * Math.cos(a), cy + Math.min(r, 280) * Math.sin(a)]);
       });
     }
     return { W, H, pos };
@@ -58,6 +60,9 @@ export function LocalGraph({ rev }: { rev: string }) {
         </select>
         <label>
           <input type="checkbox" checked={citations} onChange={(e) => setCitations(e.target.checked)} /> show citations/influence
+        </label>
+        <label>
+          <input type="checkbox" checked={assessments} onChange={(e) => setAssessments(e.target.checked)} /> show assessments
         </label>
         <span className="muted">
           {data.nodes.length} nodes · relations are diamonds; edge labels are roles · candidates and context edges hidden {data.truncated && `· ${data.note}`}
